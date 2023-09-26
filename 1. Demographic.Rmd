@@ -1,0 +1,88 @@
+---
+title: "Demographic Charting"
+author: "Huy Nguyen"
+date: "2023-07-05"
+output: html_document
+---
+
+
+```{r}
+load("Cleaned Data.RData")
+library(tidyverse)
+```
+#### Loan Purpose
+```{r}
+ggplot(dat, aes(fct_infreq(loanPurpose), fill = loanPurpose))+
+  geom_bar()+
+  theme_classic()+
+  theme(legend.position = "bottom",
+        axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+```{r}
+ggplot(dat, aes(as.factor(years), fill = years))+
+  geom_bar()+
+  theme_classic()
+
+ggplot(dat, aes(fct_reorder(loanPurpose, years, .fun = mean, .desc = T), years, fill = loanPurpose))+
+  geom_violin()+
+  geom_boxplot(alpha = .5)+
+  stat_summary(fun = mean, geom= "point", shape = 21, size = 3, color = "black", fill = "red")+
+  theme_classic()
+```
+
+
+#### Gender
+```{r}
+ggplot(dat, aes(gender, fill = gender))+
+  geom_bar()+
+  theme_classic()
+```
+
+#### Age/Age Group
+```{r}
+ggplot(dat, aes(age))+
+  geom_boxplot(fill = "lightgreen")+
+  theme_classic()
+
+ggplot(dat, aes(ageGroup, fill = ageGroup))+
+  geom_bar()+
+  theme_classic()
+```
+
+#### Housing
+```{r}
+ggplot(dat, aes(housing, fill = housing))+
+  geom_bar()+
+  theme_classic()
+```
+
+#### Marital Status
+```{r}
+ggplot(dat, aes(maritalStat, fill = maritalStat))+
+  geom_bar()+
+  theme_classic()
+```
+
+#### Job
+```{r}
+ggplot(dat, aes(job, fill = job))+
+  geom_bar()+
+  theme_classic()
+
+ggplot(dat, aes(monthsEmployed))+
+  geom_boxplot(fill = "lightblue")+
+  theme_classic()
+
+ggplot(dat, aes(yearsEmployed, fill = yearsEmployed))+
+  geom_bar()+
+  theme_classic()
+```
+
+## Customer Lifespan (months)
+```{r}
+ggplot(dat, aes(monthsCustomer))+
+  geom_boxplot()+
+  theme_classic()
+```
+

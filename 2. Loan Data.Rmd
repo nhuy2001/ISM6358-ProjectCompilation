@@ -1,0 +1,456 @@
+---
+title: "2. Loan Data"
+author: "Huy Nguyen"
+date: "2023-07-05"
+output: html_document
+---
+
+```{r}
+load("Cleaned Data.RData")
+library(tidyverse)
+```
+
+## Months Employed
+### by Age Group
+```{r}
+ggplot(dat, aes(ageGroup, monthsEmployed, fill = ageGroup))+
+  geom_bar(stat = "summary", fun = mean)+
+  theme_classic()+
+  labs(title = "Mean Months Employed by Age Group")
+#Consistent
+```
+### by Gender
+```{r}
+ggplot(dat, aes(gender, monthsEmployed, fill = gender))+
+  geom_bar(stat = "summary", fun = mean)+
+  theme_classic()+
+  labs(title = "Mean Months Employed by gender")
+```
+
+### by Credit Risk Category
+```{r}
+ggplot(dat, aes(creditRisk, monthsEmployed, fill = creditRisk))+
+  geom_bar(stat = "summary", fun = mean)+
+  theme_classic()+
+  labs(title = "Mean Months Employed by Credit Risk")
+#Check if difference is significant
+```
+### by Marital Status
+```{r}
+ggplot(dat, aes(maritalStat, monthsEmployed, fill = maritalStat))+
+  geom_bar(stat = "summary", fun = mean)+
+  theme_classic()+
+  labs(title = "Mean Months Employed by Marital Status")
+```
+### by Job Type
+```{r}
+ggplot(dat, aes(job, monthsEmployed, fill = job))+
+  geom_bar(stat = "summary", fun = mean)+
+  theme_classic()+
+  labs(title = "Mean Months Employed by Job Type")
+#Consistent
+```
+
+### by monthsEmployed
+```{r}
+ggplot(dat, aes(yearsCustomer, monthsEmployed, fill = yearsCustomer))+
+  geom_bar(stat = "summary", fun = mean)+
+  theme_classic()+
+  labs(title = "Mean Months Employed by Year Customer")
+```
+
+
+### by Housing
+```{r}
+ggplot(dat, aes(housing, monthsEmployed, fill = housing))+
+  geom_bar(stat = "summary", fun = mean)+
+  theme_classic()+
+  labs(title = "Mean Months Employed by Housing Status")
+```
+
+## Months Customer
+
+### by Age Group
+```{r}
+ggplot(dat, aes(ageGroup, monthsCustomer, fill = ageGroup))+
+  geom_boxplot()+
+  theme_classic()
+```
+
+### by Gender
+```{r}
+ggplot(dat, aes(gender, monthsCustomer, fill = gender))+
+  geom_boxplot()+
+  theme_classic()
+```
+
+### by Credit Risk Category
+```{r}
+ggplot(dat, aes(creditRisk, monthsCustomer, fill = creditRisk))+
+  geom_boxplot()+
+  theme_classic()
+```
+
+### by Marital Status
+```{r}
+ggplot(dat, aes(maritalStat, monthsCustomer, fill = maritalStat))+
+  geom_boxplot()+
+  theme_classic()
+```
+
+### by Job Type
+```{r}
+ggplot(dat, aes(job, monthsCustomer, fill = job))+
+  geom_boxplot()+
+  theme_classic()
+```
+
+### by Loan Type
+```{r}
+ggplot(dat, aes(fct_reorder(loanPurpose, age, .desc = T), age, fill = loanPurpose))+
+  geom_violin()+
+  geom_boxplot(alpha = .5)+
+  stat_summary(fun = mean, geom= "point", shape = 21, size = 3, color = "black", fill = "red")+
+  theme_classic()
+
+ggplot(dat, aes(fct_reorder(loanPurpose, monthsCustomer, .desc = T), monthsCustomer, fill = loanPurpose))+
+  geom_violin()+
+  geom_boxplot(alpha = .5)+
+  stat_summary(fun = mean, geom= "point", shape = 21, size = 3, color = "black", fill = "red")+
+  theme_classic()
+```
+
+```{r}
+cstLfSpnCr <- dat %>% filter(loanPurpose %in% c("New Car", "Used Car"))
+
+cstLfSpnCr$loanPurpose <- cstLfSpnCr$loanPurpose %>% as.character() %>% as.factor()
+
+paste("Skew")
+tapply(cstLfSpnCr$monthsCustomer, cstLfSpnCr$loanPurpose, psych::skew)
+paste("Mean")
+tapply(cstLfSpnCr$monthsCustomer, cstLfSpnCr$loanPurpose, mean)
+wilcox.test(data = cstLfSpnCr, monthsCustomer ~ loanPurpose)
+```
+
+## Bank Account
+
+```{r}
+library(scales)
+ggplot(dat, aes(checking, savings, color = creditRisk))+
+  geom_point()+
+  geom_smooth(method = "lm", linetype = "dashed")+
+  facet_wrap(.~creditRisk)+
+  theme_classic()+
+  scale_y_continuous(breaks = pretty_breaks(n = 9))+
+  scale_x_continuous(breaks = pretty_breaks(n = 8))
+```
+
+### Filtering extreme case out
+```{r}
+money <- dat %>% filter(checking != 0 & savings != 0)
+ggplot(money, aes(checking, savings, color = creditRisk))+
+  geom_point()+
+  geom_smooth(method = "lm", linetype = "dashed")+
+  facet_wrap(.~creditRisk)+
+  theme_classic()+
+  scale_y_continuous(breaks = pretty_breaks(n = 9))+
+  scale_x_continuous(breaks = pretty_breaks(n = 8))
+```
+
+## Credit Risk
+Use proportion alongside raw number
+
+```{r}
+ggplot(dat, aes(creditRisk, fill = creditRisk))+
+  geom_bar()+
+  theme_classic()
+#Almost equal distribution
+```
+
+## by Accounts
+```{r}
+dat <- dat %>% mutate(
+  sumAccount = checking + savings
+  )
+
+money2 <- dat %>% select(creditRisk, checking, savings, sumAccount) %>% pivot_longer(
+  cols = 2:4,
+  names_to = "type",
+  values_to = "numVal"
+)
+
+ggplot(money2, aes(creditRisk, numVal, fill = type))+
+  geom_bar(stat = "summary", fun = mean, position = "dodge")+
+  theme_classic()+
+  labs(title = "mean")
+
+ggplot(money2, aes(creditRisk, numVal, fill = type))+
+  geom_bar(stat = "summary", fun = median, position = "dodge")+
+  theme_classic()+
+  labs(title = "median") #Acknowledge skew but median of checking is 0 for both group so can't compare
+```
+
+T.Test
+```{r}
+money2.1 <- dat %>% 
+  select(creditRisk, checking, savings, sumAccount)
+
+paste("Mann-Whitney U Test, testing mean difference")
+wilcox.test(data = money2.1, checking ~ creditRisk)
+wilcox.test(data = money2.1, savings ~ creditRisk)
+wilcox.test(data = money2.1, sumAccount ~ creditRisk)
+#Fail to reject NULL hypothesis. These differences only exist in this sample. Also consistent with logistic regression
+
+library(coin)
+paste("Median Test, testing median difference")
+median_test(data = money2.1, checking ~ creditRisk)
+median_test(data = money2.1, savings ~ creditRisk)
+median_test(data = money2.1, sumAccount ~ creditRisk)
+#Fail to reject NULL hypothesis. These differences only exist in this sample. Also consistent with logistic regression
+```
+
+### by Customer Lifetime
+```{r, fig.height=5, fig.width=9}
+clCar <- ggplot(data = cstLfSpnCr, aes(monthsCustomer, fill = creditRisk))+
+  geom_boxplot()+
+  facet_grid(loanPurpose~.)+
+  theme_classic()+
+  theme(legend.position = "none")+
+  scale_x_continuous(name = "Customer Lifetime (months)")
+
+export::graph2png(clCar, "CustomerLifetime.png")
+```
+
+```{r}
+paste("skew")
+tapply(cstLfSpnCr$monthsCustomer[cstLfSpnCr$loanPurpose == "New Car"], cstLfSpnCr$creditRisk[cstLfSpnCr$loanPurpose == "New Car"], psych::skew)
+tapply(cstLfSpnCr$monthsCustomer[cstLfSpnCr$loanPurpose == "Used Car"], cstLfSpnCr$creditRisk[cstLfSpnCr$loanPurpose == "Used Car"], psych::skew)
+paste("mean")
+tapply(cstLfSpnCr$monthsCustomer[cstLfSpnCr$loanPurpose == "New Car"], cstLfSpnCr$creditRisk[cstLfSpnCr$loanPurpose == "New Car"], mean)
+tapply(cstLfSpnCr$monthsCustomer[cstLfSpnCr$loanPurpose == "Used Car"], cstLfSpnCr$creditRisk[cstLfSpnCr$loanPurpose == "Used Car"], mean)
+```
+
+```{r}
+wilcox.test(data = cstLfSpnCr, cstLfSpnCr$monthsCustomer[cstLfSpnCr$loanPurpose == "New Car"] ~ cstLfSpnCr$creditRisk[cstLfSpnCr$loanPurpose == "New Car"])
+
+var.test(data = cstLfSpnCr, cstLfSpnCr$monthsCustomer[cstLfSpnCr$loanPurpose == "Used Car"] ~ cstLfSpnCr$creditRisk[cstLfSpnCr$loanPurpose == "Used Car"])
+t.test(data = cstLfSpnCr, cstLfSpnCr$monthsCustomer[cstLfSpnCr$loanPurpose == "Used Car"] ~ cstLfSpnCr$creditRisk[cstLfSpnCr$loanPurpose == "Used Car"], var.equal = F)
+```
+
+### by martial Stat
+```{r, fig.width=9, fig.height=5}
+maritalStat.Prop <- dat %>% 
+  group_by(maritalStat, gender) %>%
+  summarise(
+    highRisk = length(creditRisk[creditRisk == "High"]) / length(creditRisk) * -1,
+    lowRisk =  length(creditRisk[creditRisk == "Low"]) / length(creditRisk)
+  ) %>%
+  pivot_longer(
+    cols = c("highRisk", "lowRisk"),
+    names_to = "creditRisk",
+    values_to = "proportion"
+  ) %>%
+  mutate(
+    valPerc = scales::percent(proportion)
+  )
+
+mrtlProp <- ggplot(maritalStat.Prop, aes(proportion, maritalStat, fill = creditRisk, label = valPerc))+
+  geom_bar(stat = "identity", reserve = "single")+
+  theme_classic()+
+  facet_grid(gender~., scales = "free", space = "free")+
+  scale_y_discrete(limits = rev, name = "Marital Status")+
+  theme(legend.position = "none",
+        plot.title = element_text(face = "bold"),
+        axis.text.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.ticks.x = element_blank())+
+  geom_text(hjust = -.1)+
+  labs(title = "Marital Percentage by Credit Risk")
+#Divorced decree
+#Divorced former spouse might attempt to drag both credit scores down via large purchases (without payment) on joint account post-divorce
+#Kids might be a factor -> unsure
+#Socioeconomic status might be a better predictor
+#FIXME: WHAT WOULD BE THE RECOMMENDATION? IS IT POSSIBLE TO APPLY ETHICS IN THIS CASE
+#Straightforward would be tightened awareness toward divorcees.
+#Are married men more likely to apply for 'joined' loan than
+```
+
+### by age(Group)
+```{r, fig.width=12, fig.height=5}
+age.Prop <- dat %>% 
+  group_by(ageGroup) %>%
+  summarise(
+    highRisk = length(creditRisk[creditRisk == "High"]) / length(creditRisk) * -1,
+    lowRisk =  length(creditRisk[creditRisk == "Low"]) / length(creditRisk)
+  ) %>%
+  pivot_longer(
+    cols = c("highRisk", "lowRisk"),
+    names_to = "creditRisk",
+    values_to = "proportion"
+  ) %>%
+  mutate(
+    valPerc = scales::percent(proportion)
+  )
+
+ageProp <- ggplot(age.Prop, aes(proportion, ageGroup, fill = creditRisk, label = valPerc))+
+  geom_col()+
+  theme_classic()+
+  scale_y_discrete(limits = rev, name = "Age Group")+
+  geom_text(hjust = -.1)+
+  theme(legend.position = "none",
+        plot.title = element_text(face = "bold"),
+        axis.text.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.ticks.x = element_blank())+
+  labs(title = "Age Percentage by Credit Risk")
+#Young-Adult has highest credit risk, adults about the same, old tend to have lower credit risks
+```
+
+### by Housing
+```{r, fig.width=13, fig.height=5}
+housing.Prop <- dat %>% 
+  group_by(housing) %>%
+  summarise(
+    highRisk = length(creditRisk[creditRisk == "High"]) / length(creditRisk) * -1,
+    lowRisk =  length(creditRisk[creditRisk == "Low"]) / length(creditRisk)
+  ) %>%
+  pivot_longer(
+    cols = c("highRisk", "lowRisk"),
+    names_to = "creditRisk",
+    values_to = "proportion"
+  ) %>%
+  mutate(
+    valPerc = scales::percent(proportion)
+  )
+
+hs.Prop <- ggplot(housing.Prop, aes(proportion, housing, fill = creditRisk, label = valPerc))+
+  geom_col()+
+  theme_classic()+
+  scale_y_discrete(limits = rev, name = "Housing")+
+  geom_text(hjust = -.1)+
+  theme(legend.position = "none",
+        plot.title = element_text(face = "bold"),
+        axis.text.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.ticks.x = element_blank())+
+  labs(title = "Housing Percentage by Credit Risk")
+#House owners are more financially stable
+```
+
+### by Job
+```{r}
+job.Prop <- dat %>% 
+  group_by(job) %>%
+  summarise(
+    highRisk = length(creditRisk[creditRisk == "High"]) / length(creditRisk) * -1,
+    lowRisk =  length(creditRisk[creditRisk == "Low"]) / length(creditRisk)
+  ) %>%
+  pivot_longer(
+    cols = c("highRisk", "lowRisk"),
+    names_to = "creditRisk",
+    values_to = "proportion"
+  ) %>%
+  mutate(
+    valPerc = scales::percent(proportion)
+  )
+
+ggplot(job.Prop, aes(proportion, job, fill = creditRisk, label = valPerc))+
+  geom_col()+
+  theme_classic()+
+  scale_y_discrete(limits = rev)+
+  geom_text(hjust = -.1)
+#About the same across the board
+```
+
+### by monthsCustomer
+```{r, fig.width=12, fig.height=5}
+yCust.Prop <- dat %>% 
+  group_by(yearsCustomer) %>%
+  summarise(
+    highRisk = length(creditRisk[creditRisk == "High"]) / length(creditRisk) * -1,
+    lowRisk =  length(creditRisk[creditRisk == "Low"]) / length(creditRisk)
+  ) %>%
+  pivot_longer(
+    cols = c("highRisk", "lowRisk"),
+    names_to = "creditRisk",
+    values_to = "proportion"
+  ) %>%
+  mutate(
+    valPerc = scales::percent(proportion)
+  )
+
+cstLF <- ggplot(yCust.Prop, aes(proportion, yearsCustomer, fill = creditRisk, label = valPerc))+
+  geom_col()+
+  theme_classic()+
+  scale_y_discrete(limits = rev, name = "Years")+
+  geom_text(hjust = -.1)+
+  theme(legend.position = "none",
+        plot.title = element_text(face = "bold"),
+        axis.text.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.ticks.x = element_blank())+
+  labs(title = "Customer Lifetime (Years) Percentage by Credit Risk")
+```
+
+```{r}
+library(patchwork)
+mrtlProp + ageProp + hs.Prop + cstLF
+```
+
+
+### by yearsEmployed
+```{r}
+yEmp.Prop <- dat %>% 
+  group_by(yearsEmployed) %>%
+  summarise(
+    highRisk = length(creditRisk[creditRisk == "High"]) / length(creditRisk) * -1,
+    lowRisk =  length(creditRisk[creditRisk == "Low"]) / length(creditRisk)
+  ) %>%
+  pivot_longer(
+    cols = c("highRisk", "lowRisk"),
+    names_to = "creditRisk",
+    values_to = "proportion"
+  ) %>%
+  mutate(
+    valPerc = scales::percent(proportion)
+  )
+
+ggplot(yEmp.Prop, aes(proportion, yearsEmployed, fill = creditRisk, label = valPerc))+
+  geom_col()+
+  theme_classic()+
+  scale_y_discrete(limits = rev)+
+  geom_text(hjust = -.1)
+#Pretty consistent surprisingly
+```
+
+### by Loan Type
+```{r}
+lnTyp.Prop <- dat %>% 
+  group_by(loanPurpose) %>%
+  summarise(
+    highRisk = length(creditRisk[creditRisk == "High"]) / length(creditRisk) * -1,
+    lowRisk =  length(creditRisk[creditRisk == "Low"]) / length(creditRisk)
+  ) %>%
+  pivot_longer(
+    cols = c("highRisk", "lowRisk"),
+    names_to = "creditRisk",
+    values_to = "proportion"
+  ) %>%
+  mutate(
+    valPerc = scales::percent(proportion)
+  )
+
+ggplot(lnTyp.Prop, aes(proportion, fct_reorder(loanPurpose, proportion, .desc = T), fill = creditRisk, label = valPerc))+
+  geom_col()+
+  theme_classic()+
+  geom_text(hjust = -.1)+
+  scale_y_discrete(name = "Loan Purpose")+
+  theme(legend.position = "none",
+        plot.title = element_text(face = "bold"),
+        axis.text.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.ticks.x = element_blank())+
+  labs(title = "Loan Purpose Percentage by Credit Risk")
+```
+
+
